@@ -1,0 +1,60 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+	<!-- Orion.ProjectVersion.Msbuild -->
+
+	<PropertyGroup>
+		<LogsHeadPath>$(SolutionDir).git\logs\HEAD</LogsHeadPath>
+		<AssemblyInfoPath>$(ProjectDir)Properties\AssemblyInfo.cs</AssemblyInfoPath>
+	</PropertyGroup>
+
+
+
+	<Target Name="UpdateVersion" BeforeTargets="BeforeBuild" Condition="$(Configuration.ToLower().StartsWith('release'))">
+		<Message Text="LogsHeadPath : $(LogsHeadPath)" />
+		<Message Text="AssemblyInfoPath : $(AssemblyInfoPath)" />
+		<ModifyAssemblyInfo LogsHead="$(LogsHeadPath)" AssemblyPath="$(AssemblyInfoPath)"/>
+	</Target>
+
+
+
+	<UsingTask TaskName="ModifyAssemblyInfo" TaskFactory="CodeTaskFactory" AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.v4.0.dll">
+		<ParameterGroup>
+			<LogsHead   ParameterType="System.String" Required="true" />
+			<AssemblyPath ParameterType="System.String" Required="true" />
+		</ParameterGroup>
+		<Task>
+			<Using Namespace="System.IO" />
+			<Using Namespace="System.Text.RegularExpressions" />
+			<Code Type="Fragment" Language="cs">
+				<![CDATA[    
+				if (!File.Exists(this.LogsHead)) { Console.WriteLine("  [ LogsHead File Not Found ]"); return true; }				
+				if (!File.Exists(this.AssemblyPath)){ Console.WriteLine("  [ AssemblyInfo File Not Found ]"); return true; }				
+					
+
+				/* 取得 Commit 時間 */
+				string[] split = File.ReadLines(this.LogsHead).Last().Split(' ');
+				string hashCode = split[1].Substring(0, 7);		
+				long timestamp = long.Parse(split[4]);
+				
+				var date = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc).AddSeconds(timestamp).ToLocalTime();
+				string description = string.Format("{0:yyyy-MM-dd HH:mm:ss} [{1}]", date, hashCode);
+				string version = date.ToString("y.M.d.H");		
+				Console.WriteLine("  CommitTime : " + description);
+
+
+				/* 更新 AssemblyInfo */
+				var txt = File.ReadAllText(this.AssemblyPath);
+				txt = Regex.Replace(txt, @"(?m)(?<=^\[assembly:\sAssemblyDescription\("")[^""]*(?=""\)\])", description);
+				txt = Regex.Replace(txt, @"(?m)(?<=^\[assembly:\sAssemblyCompany\("")[^""]*(?=""\)\])", "Orion");
+				txt = Regex.Replace(txt, @"(?m)(?<=^\[assembly:\sAssemblyCopyright\("")[^""]*(?=""\)\])", "Copyright © " + date.Year + " Orion Information Co.");		
+				txt = Regex.Replace(txt, @"(?m)(?<=^\[assembly:\sAssemblyVersion\("")[^""]+(?=""\)\])", version);
+				txt = Regex.Replace(txt, @"(?m)(?<=^\[assembly:\sAssemblyFileVersion\("")[^""]+(?=""\)\])", version);
+
+				new FileInfo(this.AssemblyPath).IsReadOnly = false;
+				File.WriteAllText(this.AssemblyPath, txt);
+			]]>
+			</Code>
+		</Task>
+	</UsingTask>
+
+</Project>

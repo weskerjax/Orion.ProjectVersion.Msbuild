@@ -1,0 +1,21 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{D6A35C6E-EC4A-41D2-A8D8-70B6AB0A9ABF}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
+    <OutputPath>bin\</OutputPath>
+    <!-- NuGet Package 需要此變數，給一個不存在的敷衍過去 -->
+    <TargetPath>.\none</TargetPath>
+  </PropertyGroup>
+  <ItemGroup>
+    <None Include="build\Orion.ProjectVersion.Msbuild.targets" />
+    <None Include="Orion.ProjectVersion.Msbuild.nuspec" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- 空的 Build -->
+  <Target Name="Build" />
+  <Target Name="Rebuild" />
+</Project>
